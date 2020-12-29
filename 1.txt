@@ -1,0 +1,55 @@
+xrdp 0.9.12-1
+xorgxrdp 1:0.2.12-1
+xrdp-hwe-18.04
+xserver-xorg-core-hwe-18.04 3:14.5
+
+libminiupnpc17 2.1
+vino 3.22.0
+
+tightvncserver 1.3.10-0
+
+https://zhuanlan.zhihu.com/p/125473400
+https://github.com/microsoft/linux-vm-tools/blob/master/ubuntu/18.04/install.sh
+Windows 10 远程连接到Ubuntu 18.04上
+Coder Lan
+Coder Lan
+业余码农
+1 人赞同了该文章
+最近准备在Ubuntu上编译OpenJDK14，但是鉴于它的使用体验比起Windows 10来实在差太多（但是Windows 10上编译OpenJDK体验也实在差太多），没办法，只要好在一台电脑上装了Ubuntu，然后通过另一台Windows 10的电脑Remote RDP连接过去，这样的两边都爽。
+
+然后就上网搜索了一下，大多数文档给出的方法都是如下的：
+
+安装：
+
+sudo apt install xrdp // 这是网上的方案，其实还要装下一个包。
+sudo apt-get install xorgxrdp-hwe-18.04
+然后再编辑
+
+sudo vim /etc/xrdp/startvm.sh 或者 sudo gedit /etc/xrdp/startvm.sh
+把最下面的test和exec两行注释掉，添加一行
+
+gnome-session
+然后重启Ubuntu电脑 ，然后打开你的Windows 10 remote快快乐乐地登录 了，结果是一片淡蓝，然后就查Log，和这个一样的https://http://github.com/neutrinolabs/xrdp/issues/1358，最后找好很久，终于打到解决方案，就少装了一个包:
+
+sudo apt-get install xorgxrdp-hwe-18.04
+到这里了就能连接过去了。但是新问题又出现了，登录一直弹出一个窗口显示：
+
+authentication is required to create a color profile
+然后在是少了一个配置：
+
+sudo vim /etc/polkit-1/localauthority/50-local.d/color.pkla
+内容如下：
+
+[Allow colord for all users]
+Identity=YOUR-USER-GROUP（我的是lan）:*
+Action=org.freedesktop.color-manager.create-device;org.freedesktop.color-manager.create-profile;org.freedesktop.color-manager.delete-device;org.freedesktop.color-manager.delete-profile;org.freedesktop.color-manager.modify-device;org.freedesktop.color-manager.modify-profile
+ResultAny=yes
+ResultInactive=yes
+ResultActive=yes
+那个YOUR-USER-GROUP换你自己的用户所在的group（怎么查看自己的group呢？看下面）
+
+// 查看自己的group,那个lan就是。
+lan@lanubuntu:~$ groups
+lan adm cdrom sudo dip plugdev lpadmin sambashare
+lan@lanubuntu:~$
+到这里应该是可以了。
